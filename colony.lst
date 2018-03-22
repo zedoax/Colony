@@ -1,0 +1,409 @@
+   1 0000               #
+   2 0000               # Colony Project: Concepts of Computer Systems
+   3 0000               # --------------------------------------------
+   4 0000               # Runs a game of life based on parameter input
+   5 0000               #
+   6 0000               # @modified   03/22/2018
+   7 0000               # @author     Elijah Bendinsky
+   8 0000               #
+   9 0000               
+  10 0000               	.data
+  11 0000               
+  12 0000               #
+  13 0000               # INPUT Prompts
+  14 0000               #
+  15 0000               prompt_size:
+  16 0000 456E7465	        .asciiz "Enter board size: "
+          7220626F
+          61726420
+          73697A65
+          3A2000  
+  17 0013               prompt_generations:
+  18 0013 456E7465	        .asciiz "Enter number of generations to run: "
+          72206E75
+          6D626572
+          206F6620
+          67656E65
+          72617469
+  19 0038               prompt_a_alive:
+  20 0038 456E7465	        .asciiz "Enter number of live cells for colony A: "
+          72206E75
+          6D626572
+          206F6620
+          6C697665
+          2063656C
+  21 0062               prompt_b_alive:
+  22 0062 456E7465	        .asciiz "Enter number of live cells for colony B: "
+          72206E75
+          6D626572
+          206F6620
+          6C697665
+          2063656C
+  23 008c               prompt_locations:
+  24 008c 53746172	        .asciiz "Start entering locations\n"
+          7420656E
+          74657269
+          6E67206C
+          6F636174
+          696F6E73
+  25 00a6               
+  26 00a6               #
+  27 00a6               # ERROR Messages
+  28 00a6               #
+  29 00a6               error_size:
+  30 00a6 5741524E	        .asciiz "WARNING: illegal board size, try again: "
+          494E473A
+          20696C6C
+          6567616C
+          20626F61
+          72642073
+  31 00cf               error_generations:
+  32 00cf 5741524E	        .asciiz "WARNING: illegal number of generations, try again: "
+          494E473A
+          20696C6C
+          6567616C
+          206E756D
+          62657220
+  33 0103               error_alive:
+  34 0103 5741524E	        .asciiz "WARNING: illegal number of live cells, try again: "
+          494E473A
+          20696C6C
+          6567616C
+          206E756D
+          62657220
+  35 0136               error_start_locations:
+  36 0136 4552524F	        .asciiz "ERROR: illegal point location"
+          523A2069
+          6C6C6567
+          616C2070
+          6F696E74
+          206C6F63
+  37 0154               
+  38 0154               #
+  39 0154               # OUTPUT Text
+  40 0154               #
+  41 0154               colony_banner:
+  42 0154 2A2A2A2A	        .ascii "**********************\n"
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A0A  
+  43 016b 2A2A2A2A	        .ascii "****    Colony    ****\n"
+          20202020
+          436F6C6F
+          6E792020
+          20202A2A
+          2A2A0A  
+  44 0182 2A2A2A2A	        .asciiz "**********************\n\n"
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A2A2A
+          2A2A0A0A
+  45 019b               a:
+  46 019b 41      	        .ascii "A"
+  47 019c               b:
+  48 019c 42      	        .ascii "B"
+  49 019d               
+  50 019d               #
+  51 019d               # Global Variables
+  52 019d               # 
+  53 019d                       .globl colony # Replace
+  54 019d               
+  55 019d               param_block:
+  56 019d 000000  	        .word   0, 1, 2
+     01a0 00000000
+     01a4 00000001
+     01a8 00000002
+  57 01ac               
+  58 01ac               #
+  59 01ac               # Linker Replacements
+  60 01ac               #
+  61 01ac               PRINT_INT=1
+  62 01ac               PRINT_STRING=4
+  63 01ac               PRINT_CHAR=11
+  64 01ac               
+  65 01ac               READ_INTEGER=5
+  66 01ac               READ_CHARACTER=12
+  67 01ac               
+  68 01ac               MALLOC=9                                     # Lol
+  69 01ac               
+  70 01ac               FRAMESIZE_40=40
+  71 01ac               
+  72 01ac               # ************************** BEGIN MAIN PROGRAM *******************************
+  73 01ac               
+  74 0000                   .text
+  75 0000               
+  76 0000               #
+  77 0000               # Main
+  78 0000               #
+  79 0000               main:
+  80 0000 23BDFFD8	        addi    $sp, $sp, -FRAMESIZE_40
+  81 0004 AFBF0024	        sw      $ra, -4+FRAMESIZE_40($sp)
+  82 0008 AFB00020	        sw      $s0, -8+FRAMESIZE_40($sp)
+  83 000c AFB1001C	        sw      $s1, -12+FRAMESIZE_40($sp)
+  84 0010 AFB20018	        sw      $s2, -16+FRAMESIZE_40($sp)
+  85 0014 AFB30014	        sw      $s3, -20+FRAMESIZE_40($sp)
+  86 0018 AFB40010	        sw      $s4, -24+FRAMESIZE_40($sp)
+  87 001c AFB5000C	        sw      $s5, -28+FRAMESIZE_40($sp)
+  88 0020 AFB60008	        sw      $s6, -32+FRAMESIZE_40($sp)
+  89 0024 AFB70004	        sw      $s7, -36+FRAMESIZE_40($sp)
+  90 0028 AFBD0000	        sw      $sp, -40+FRAMESIZE_40($sp)
+  91 002c               
+  92 002c               print_banner:
+  93 002c 20020004	        addi    $v0, $zero, PRINT_STRING     # Print the Colony Banner
+  94 0030 3C040000	        la      $a0, colony_banner
+     0034 34840000
+  95 0038 0000000C	        syscall
+  96 003c               
+  97 003c               input:
+  98 003c 3C040000	        la      $a0, prompt_size
+     0040 34840000
+  99 0044               
+ 100 0044               input_size:
+ 101 0044 20020004	        addi    $v0, $zero, PRINT_STRING
+ 102 0048 0000000C	        syscall
+ 103 004c               
+ 104 004c 20020005	        addi    $v0, $zero, READ_INTEGER
+ 105 0050 0000000C	        syscall
+ 106 0054               
+ 107 0054 3C040000	        la      $a0, error_size
+     0058 34840000
+ 108 005c               
+ 109 005c 2848001F	        slti    $t0, $v0, 31                 # Set t0 = 1 if input <= 30
+ 110 0060 28490004	        slti    $t1, $v0, 4                  # Set t1 = 0 if input >= 4
+ 111 0064 01204827	        not     $t1                          # Flip t1
+ 112 0068 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 4 <= input <= 30
+ 113 006c 1100FFF5	        beq     $t0, $zero, input_size       # Redo input if invalid
+ 114 0070               
+ 115 0070 20500000	        addi    $s0, $v0, 0                  # s0 = input
+ 116 0074               
+ 117 0074 02100018	        mul     $s7, $s0, $s0                # Calculate size of colony array
+     0078 0000B812
+ 118 007c 34010004	        mul     $s7, $s7, 4
+     0080 02E10018
+     0084 0000B812
+ 119 0088                       
+ 120 0088 03B7E822	        sub     $sp, $sp, $s7                # Allocate colony a on stack
+ 121 008c               
+ 122 008c 3C080000	        la      $t0, param_block
+     0090 35080000
+ 123 0094 AD1D0000	        sw      $sp, 0($t0)                  # Put address of colony on p block
+ 124 0098                       
+ 125 0098 03B7E822	        sub     $sp, $sp, $s7                # Allocate colony b on stack
+ 126 009c               
+ 127 009c 3C080000	        la      $t0, param_block            
+     00a0 35080000
+ 128 00a4 AD1D0004	        sw      $sp, 4($t0)                  # Put address of colony on p block
+ 129 00a8               
+ 130 00a8 3C040000	        la      $a0, prompt_generations
+     00ac 34840000
+ 131 00b0               
+ 132 00b0               input_generations:
+ 133 00b0 20020004	        addi    $v0, $zero, PRINT_STRING
+ 134 00b4 0000000C	        syscall
+ 135 00b8               
+ 136 00b8 20020005	        addi    $v0, $zero, READ_INTEGER
+ 137 00bc 0000000C	        syscall
+ 138 00c0               
+ 139 00c0 3C040000	        la      $a0, error_generations
+     00c4 34840000
+ 140 00c8               
+ 141 00c8 28480015	        slti    $t0, $v0, 21                 # Set t0 = 1 if input <= 20
+ 142 00cc 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 143 00d0 01204827	        not     $t1                          # Flip t1
+ 144 00d4 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input <= 20
+ 145 00d8 1100FFF5	        beq     $t0, $zero, input_generations      # Redo input if invalid
+ 146 00dc               
+ 147 00dc 3C080000	        la      $t0, param_block
+     00e0 35080000
+ 148 00e4 AD020008	        sw      $v0, 8($t0)                  # Store generations on param block
+ 149 00e8               
+ 150 00e8 3C040000	        la      $a0, prompt_a_alive
+     00ec 34840000
+ 151 00f0               
+ 152 00f0               input_a_alive:
+ 153 00f0 20020004	        addi    $v0, $zero, PRINT_STRING
+ 154 00f4 0000000C	        syscall
+ 155 00f8               
+ 156 00f8 20020005	        addi    $v0, $zero, READ_INTEGER
+ 157 00fc 0000000C	        syscall
+ 158 0100               
+ 159 0100 3C040000	        la      $a0, error_alive
+     0104 34840000
+ 160 0108               
+ 161 0108 02100018	        mul     $t0, $s0, $s0
+     010c 00004012
+ 162 0110 0048402A	        slt     $t0, $v0, $t0                # Set t0 = 1 if input < cells
+ 163 0114 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 164 0118 01204827	        not     $t1                          # Flip t1
+ 165 011c 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < cells
+ 166 0120 1100FFF3	        beq     $t0, $zero, input_a_alive    # Redo input if invalid
+ 167 0124               
+ 168 0124 20510000	        addi    $s1, $v0, 0                  # s1 = Number of a to place
+ 169 0128               
+ 170 0128 3C040000	        la      $a0, prompt_locations
+     012c 34840000
+ 171 0130               
+ 172 0130               input_a_locations:
+ 173 0130 20020004	        addi    $v0, $zero, PRINT_STRING
+ 174 0134 0000000C	        syscall
+ 175 0138               
+ 176 0138               input_a_locations_loop:
+ 177 0138 2A280001	        slti    $t0, $s1, 1                  # Exit when no more a need placing
+ 178 013c 1500001C	        bne     $t0, $zero, input_b_alive
+ 179 0140               
+ 180 0140 20020005	        addi    $v0, $zero, READ_INTEGER
+ 181 0144 0000000C	        syscall
+ 182 0148                   
+ 183 0148 3C040000	        la      $a0, error_alive
+     014c 34840000
+ 184 0150               
+ 185 0150 0050402A	        slt     $t0, $v0, $s0                # Set t0 = 1 if input < boardsize
+ 186 0154 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 187 0158 01204827	        not     $t1                          # Flip t1
+ 188 015c 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < boardsize
+ 189 0160 1100003F	        beq     $t0, $zero, done             # Exit if input invalid
+ 190 0164               
+ 191 0164 20520000	        addi    $s2, $v0, 0                  # s2 = row for a
+ 192 0168               
+ 193 0168 20020005	        addi    $v0, $zero, READ_INTEGER
+ 194 016c 0000000C	        syscall
+ 195 0170               
+ 196 0170 3C040000	        la      $a0, error_alive
+     0174 34840000
+ 197 0178               
+ 198 0178 0050402A	        slt     $t0, $v0, $s0                # Set t0 = 1 if input < boardsize
+ 199 017c 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 200 0180 01204827	        not     $t1                          # Flip t1
+ 201 0184 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < boardsize
+ 202 0188 11000035	        beq     $t0, $zero, done             # Exit if input invalid
+ 203 018c               
+ 204 018c 22040000	        addi    $a0, $s0, 0                  # Change value of requested cell
+ 205 0190 20450000	        addi    $a1, $v0, 0
+ 206 0194 3C060000	        la      $a2, a
+     0198 34C60000
+ 207 019c 80C60000	        lb      $a2, 0($a2)
+ 208 01a0               #        jal     change_cell
+ 209 01a0               
+ 210 01a0 2231FFFF	        addi    $s1, $s1, -1
+ 211 01a4               
+ 212 01a4 3C040000	        la      $a0, prompt_b_alive
+     01a8 34840000
+ 213 01ac               
+ 214 01ac 0800004E	        j       input_a_locations_loop
+ 215 01b0               
+ 216 01b0               input_b_alive:
+ 217 01b0 20020004	        addi    $v0, $zero, PRINT_STRING
+ 218 01b4 0000000C	        syscall
+ 219 01b8               
+ 220 01b8 20020005	        addi    $v0, $zero, READ_INTEGER
+ 221 01bc 0000000C	        syscall
+ 222 01c0               
+ 223 01c0 3C040000	        la      $a0, error_alive
+     01c4 34840000
+ 224 01c8               
+ 225 01c8 02100018	        mul     $t0, $s0, $s0
+     01cc 00004012
+ 226 01d0 0048402A	        slt     $t0, $v0, $t0                # Set t0 = 1 if input < cells
+ 227 01d4 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 228 01d8 01204827	        not     $t1                          # Flip t1
+ 229 01dc 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < cells
+ 230 01e0 1100FFF3	        beq     $t0, $zero, input_b_alive    # Redo input if invalid
+ 231 01e4               
+ 232 01e4 20510000	        addi    $s1, $v0, 0                  # s1 = Number of b to place
+ 233 01e8               
+ 234 01e8 3C040000	        la      $a0, prompt_locations
+     01ec 34840000
+ 235 01f0               
+ 236 01f0               input_b_locations:
+ 237 01f0 20020004	        addi    $v0, $zero, PRINT_STRING
+ 238 01f4 0000000C	        syscall
+ 239 01f8               
+ 240 01f8               input_b_locations_loop:
+ 241 01f8 20020005	        addi    $v0, $zero, READ_INTEGER
+ 242 01fc 0000000C	        syscall
+ 243 0200               
+ 244 0200 3C040000	        la      $a0, error_alive
+     0204 34840000
+ 245 0208               
+ 246 0208 0050402A	        slt     $t0, $v0, $s0                # Set t0 = 1 if input < boardsize
+ 247 020c 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 248 0210 01204827	        not     $t1                          # Flip t1
+ 249 0214 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < boardsize
+ 250 0218 11000011	        beq     $t0, $zero, done             # Exit if input invalid
+ 251 021c               
+ 252 021c 20520000	        addi    $s2, $v0, 0                  # s2 = row for b
+ 253 0220               
+ 254 0220 20020005	        addi    $v0, $zero, READ_INTEGER
+ 255 0224 0000000C	        syscall
+ 256 0228               
+ 257 0228 3C040000	        la      $a0, error_alive
+     022c 34840000
+ 258 0230               
+ 259 0230 0050402A	        slt     $t0, $v0, $s0                # Set t0 = 1 if input < boardsize
+ 260 0234 28490000	        slti    $t1, $v0, 0                  # Set t1 = 0 if input >= 0
+ 261 0238 01204827	        not     $t1                          # Flip t1
+ 262 023c 01094024	        and     $t0, $t0, $t1                # t0 = 1 if 0 <= input < boardsize
+ 263 0240 11000007	        beq     $t0, $zero, done             # Exit if input invalid
+ 264 0244               
+ 265 0244 22040000	        addi    $a0, $s0, 0                  # Change value of requested cell
+ 266 0248 20450000	        addi    $a1, $v0, 0
+ 267 024c 3C060000	        la      $a2, a
+     0250 34C60000
+ 268 0254 80C60000	        lb      $a2, 0($a2)
+ 269 0258               #        jal     change_cell
+ 270 0258               
+ 271 0258 2231FFFF	        addi    $s1, $s1, -1
+ 272 025c               
+ 273 025c 0800007E	        j       input_b_locations_loop
+ 274 0260               
+ 275 0260               done:
+ 276 0260 8FBF0024	        lw      $ra, -4+FRAMESIZE_40($sp)
+ 277 0264 8FB00020	        lw      $s0, -8+FRAMESIZE_40($sp)
+ 278 0268 8FB1001C	        lw      $s1, -12+FRAMESIZE_40($sp)
+ 279 026c 8FB20018	        lw      $s2, -16+FRAMESIZE_40($sp)
+ 280 0270 8FB30014	        lw      $s3, -20+FRAMESIZE_40($sp)
+ 281 0274 8FB40010	        lw      $s4, -24+FRAMESIZE_40($sp)
+ 282 0278 8FB5000C	        lw      $s5, -28+FRAMESIZE_40($sp)
+ 283 027c 8FB60008	        lw      $s6, -32+FRAMESIZE_40($sp)
+ 284 0280 8FB70004	        lw      $s7, -36+FRAMESIZE_40($sp)       
+ 285 0284 23BD0028	        addi    $sp, $sp, FRAMESIZE_40
+ 286 0288               
+ 287 0288 03E00008	        jr      $ra
+
+
+FRAMESIZE_40            = 00000028   
+MALLOC                  = 00000009   
+PRINT_CHAR              = 0000000B   
+PRINT_INT               = 00000001   
+PRINT_STRING            = 00000004   
+READ_CHARACTER          = 0000000C   
+READ_INTEGER            = 00000005   
+a                         0000019B R  data 
+b                         0000019C R  data 
+colony                    ******** XG
+colony_banner             00000154 R  data 
+done                      00000260 R  text 
+error_alive               00000103 R  data 
+error_generations         000000CF R  data 
+error_size                000000A6 R  data 
+error_start_locations     00000136 R  data 
+input                     0000003C R  text 
+input_a_alive             000000F0 R  text 
+input_a_locations         00000130 R  text 
+input_a_locations_loop    00000138 R  text 
+input_b_alive             000001B0 R  text 
+input_b_locations         000001F0 R  text 
+input_b_locations_loop    000001F8 R  text 
+input_generations         000000B0 R  text 
+input_size                00000044 R  text 
+main                      00000000 R  text 
+param_block               000001A0 R  data 
+print_banner              0000002C R  text 
+prompt_a_alive            00000038 R  data 
+prompt_b_alive            00000062 R  data 
+prompt_generations        00000013 R  data 
+prompt_locations          0000008C R  data 
+prompt_size               00000000 R  data 
