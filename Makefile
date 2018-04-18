@@ -7,12 +7,16 @@
 #
 RASM  = /home/fac/wrc/bin/rasm
 RLINK = /home/fac/wrc/bin/rlink
-RSIM  = /home/fac/wrc/bin/rsim
 
 #
 # Suffixes to be used or created
 #
 .SUFFIXES:	.asm .obj .lst .out
+
+#
+# Object files
+#
+OBJFILES = colony.obj colony_game.obj colony_util.obj
 
 #
 # Transformation rule: .asm into .obj
@@ -24,19 +28,10 @@ RSIM  = /home/fac/wrc/bin/rsim
 # Transformation rule: .obj into .out
 #
 .obj.out:
-	$(RLINK) -m -o $*.out $*.obj >$*.map
+	$(RLINK) -m -o $*.out $*.obj > $*.map
 
 #
 # Main target
 #
-colony.out:	colony.obj
-
-
-run:	colony.obj
-	- $(RSIM) colony.out
-
-debug:	colony.obj
-	- $(RSIM) -d colony.out
-	
-clean:
-	rm *.obj *.lst *.out
+colony.out:     	$(OBJFILES)
+	$(RLINK) -m -o $*.out $(OBJFILES) > $*.map
